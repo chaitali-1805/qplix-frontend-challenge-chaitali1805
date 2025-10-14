@@ -1,1 +1,337 @@
-<img src="monet.png" height="auto" width="100%"/>
+<div class="dashboard-container">
+  <!-- HERO SECTION -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="asset-showcase">
+        <div class="asset-info">
+          <h1 class="asset-name">{{ currentAssetData().assetName }}</h1>
+          <p class="asset-subtitle">{{ currentAssetData().subtitle }}</p>
+
+          <div class="value-display">
+            <span class="value-label">Current Estimated Value</span>
+            <span class="value-amount">
+              {{ formatCurrency(currentAssetData().currentValue, currentAssetData().currency) }}
+            </span>
+            <div class="value-change">
+              <span class="change-indicator positive">
+                +{{ appreciationPercentage() | number: "1.1-1" }}%
+              </span>
+              <span class="change-period">since acquisition</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-carousel">
+          <div class="carousel-container">
+            <img
+              *ngFor="let image of currentAssetData().images; let i = index"
+              [src]="image"
+              [alt]="currentAssetData().assetName + ' ' + (i + 1)"
+              class="carousel-image"
+              [class.active]="currentImageIndex() === i"
+            />
+          </div>
+
+          <div class="carousel-indicators">
+            <span
+              *ngFor="let image of currentAssetData().images; let i = index"
+              class="indicator"
+              [class.active]="currentImageIndex() === i"
+              (click)="setCurrentImage(i)"
+            ></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY SECTION -->
+  <section class="story-section">
+    <div class="section-header">
+      <h2 class="section-title">{{ currentAssetData().story.title }}</h2>
+      <div class="section-subtitle">{{ currentAssetData().story.subtitle }}</div>
+    </div>
+
+    <div class="story-grid">
+      <div
+        *ngFor="let story of currentAssetData().story.sections"
+        class="story-card"
+      >
+        <div class="story-icon">{{ story.icon }}</div>
+        <div class="story-content">
+          <h3>{{ story.title }}</h3>
+          <p>{{ story.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPECIFICATIONS -->
+  <section class="specs-section">
+    <div class="section-header">
+      <h2 class="section-title">Key Specifications</h2>
+      <div class="section-subtitle">
+        Essential characteristics that define this exceptional gem
+      </div>
+    </div>
+
+    <div class="specs-grid">
+      <div
+        class="spec-card"
+        *ngFor="let spec of (currentAssetData().details.specifications | keyvalue)"
+      >
+        <div class="spec-icon">💎</div>
+        <div class="spec-content">
+          <h3>{{ spec.value }}</h3>
+          <p>{{ currentAssetData().specDescriptions[spec.key] }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PERFORMANCE SECTION -->
+  <section class="performance-section">
+    <div class="section-header">
+      <h2 class="section-title">Investment Performance</h2>
+      <div class="section-subtitle">
+        How this rare gem has appreciated over time
+      </div>
+
+      <div class="chart-controls">
+        <button
+          class="chart-toggle"
+          [class.active]="selectedChartType() === 'bar'"
+          (click)="selectedChartType.set('bar')"
+        >
+          📊 Bar Chart
+        </button>
+        <button
+          class="chart-toggle"
+          [class.active]="selectedChartType() === 'line'"
+          (click)="selectedChartType.set('line')"
+        >
+          📈 Line Chart
+        </button>
+      </div>
+    </div>
+
+    <div class="charts-container">
+      <!-- VALUE GROWTH CHART -->
+      <div class="chart-card main-chart">
+        <h3>Value Growth Over Time</h3>
+        
+        <!-- BAR CHART VIEW -->
+        <div class="chart-container" *ngIf="selectedChartType() === 'bar'">
+          <div class="chart-bars">
+            <div
+              *ngFor="let data of currentAssetData().performanceData; let i = index"
+              class="bar-container"
+            >
+              <div class="bar-label">{{ data.year }}</div>
+              <div
+                class="chart-bar"
+                [style.height.%]="getChartHeight(data.value)"
+              >
+                <div class="bar-tooltip">
+                  <div class="tooltip-value">
+                    {{ formatCurrency(data.value, currentAssetData().currency) }}
+                  </div>
+                  <div
+                    class="tooltip-change"
+                    [style.color]="getTrendColor(data.marketTrend)"
+                  >
+                    {{ getTrendIcon(data.marketTrend) }}
+                    {{ data.appreciation > 0 ? '+' : '' }}{{ data.appreciation }}%
+                  </div>
+                </div>
+              </div>
+              <div class="bar-value">
+                {{ formatCurrency(data.value, currentAssetData().currency) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LINE CHART VIEW -->
+        <div class="line-chart-container" *ngIf="selectedChartType() === 'line'">
+          <!-- Background grid -->
+          <div class="chart-grid">
+            <div class="grid-line" *ngFor="let i of [0, 1, 2, 3, 4]">
+              <span class="grid-label" *ngIf="i === 0">
+                {{ formatCurrency(maxValue(), currentAssetData().currency) }}
+              </span>
+              <span class="grid-label" *ngIf="i === 4">
+                {{ formatCurrency(minValue(), currentAssetData().currency) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- SVG Line Chart -->
+          <svg class="line-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+              </linearGradient>
+              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0" />
+              </linearGradient>
+            </defs>
+
+            <!-- Area under the line -->
+            <path
+              [attr.d]="getLineChartPath() + ' L 100 100 L 0 100 Z'"
+              fill="url(#areaGradient)"
+              class="line-chart-area"
+            />
+
+            <!-- Main line -->
+            <path
+              [attr.d]="getLineChartPath()"
+              fill="none"
+              stroke="url(#lineGradient)"
+              stroke-width="3"
+              class="line-chart-path"
+            />
+          </svg>
+
+          <!-- Data points layer -->
+          <div class="line-chart-data-layer">
+            <!-- Data points -->
+            <div
+              *ngFor="let point of lineChartPoints(); let i = index"
+              class="data-point-group"
+              [style.left.%]="point.x"
+              [style.bottom.%]="100 - point.y"
+            >
+              <!-- The data point circle -->
+              <div
+                class="data-point-circle"
+                [class.hovered]="hoveredPointIndex() === i"
+                (mouseenter)="onPointHover(i)"
+                (mouseleave)="onPointHover(null)"
+              >
+                <div class="point-ring"></div>
+              </div>
+
+              <!-- Year label below point -->
+              <div class="point-year-label">{{ point.year }}</div>
+
+              <!-- Enhanced tooltip with detailed information like bar chart -->
+              <div
+                class="enhanced-tooltip"
+                [class.visible]="hoveredPointIndex() === i"
+              >
+                <div class="tooltip-header">
+                  <span class="tooltip-year-large">{{ point.year }}</span>
+                  
+                </div>
+                <div class="tooltip-value-large">
+                  {{ formatCurrency(point.value, currentAssetData().currency) }}
+                </div>
+                <div class="tooltip-appreciation" *ngIf="point.appreciation > 0">
+                  Total appreciation: {{ getTrendIcon(point.marketTrend) }} <strong>+{{ point.appreciation }}%</strong>
+                </div>
+                <div class="tooltip-gain" *ngIf="i > 0">
+                  Gain from {{ lineChartPoints()[i-1].year }}: 
+                  <strong>{{ formatCurrency(point.value - lineChartPoints()[i-1].value, currentAssetData().currency) }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Value Drivers with visual progress bars -->
+      <div class="chart-card factors-chart">
+        <h3>Value Drivers</h3>
+        <div class="factors-container">
+          <div
+            *ngFor="let factor of currentAssetData().marketFactors"
+            class="factor-item"
+          >
+            <div class="factor-header">
+              <span class="factor-label">{{ factor.name }}</span>
+              <span class="factor-value">{{ factor.value }}%</span>
+            </div>
+            <div class="factor-bar-container">
+              <div class="factor-bar">
+                <div 
+                  class="factor-fill" 
+                  [style.width.%]="factor.value"
+                  [attr.data-value]="factor.value"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSACTION HISTORY -->
+  <section class="market-section">
+    <div class="section-header">
+      <h2 class="section-title">Market Context</h2>
+      <div class="section-subtitle">
+        Recent comparable Kashmir sapphire transactions
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="transaction-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Carat Weight</th>
+            <th>Sale Price</th>
+            <th>Location</th>
+            <th>Auction House</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of currentAssetData().transactionHistory">
+            <td>{{ t.date }}</td>
+            <td>{{ t.item }}</td>
+            <td>{{ t.specifications['caratWeight'] }}ct</td>
+            <td class="price-cell">
+              {{ formatCurrency(t.price, currentAssetData().currency) }}
+            </td>
+            <td>{{ t.location }}</td>
+            <td>{{ t.seller }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="dashboard-footer">
+    <div class="footer-content">
+      <div class="footer-info">
+        <p>{{ currentAssetData().assetName }}</p>
+        <p class="footer-subtitle">
+          The above data may or may not be correct •
+          {{ currentAssetData().footer.notes }}
+        </p>
+      </div>
+
+      <div class="footer-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Appreciation</span>
+          <span class="stat-value positive">
+            +{{ formatCurrency(totalAppreciation(), currentAssetData().currency) }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Annual Return</span>
+          <span class="stat-value positive">
+            +{{ annualReturn() * 100 | number: "1.1-1" }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
