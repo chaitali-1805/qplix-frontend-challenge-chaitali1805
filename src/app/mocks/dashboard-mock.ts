@@ -72,8 +72,7 @@ export const collectibleAssetData: CollectibleAssetData = {
       caratWeight: 12.5,
       colorGrade: "Cornflower Blue",
       clarityGrade: "VS1",
-      cutGrade: "Excellent",
-      dimensions: "12.5 x 10.2 x 7.8 mm"
+      cutGrade: "Excellent"
     },
     origin: "Kashmir, India",
     certification: "GIA Certified"

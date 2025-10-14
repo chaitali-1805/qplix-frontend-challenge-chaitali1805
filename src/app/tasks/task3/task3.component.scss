@@ -1,8 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
-
 :host {
   display: block;
-  font-family: 'Inter', sans-serif;
   color: #1e293b;
   background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 25%, #bae6fd 50%, #7dd3fc 75%, #38bdf8 100%);
   min-height: 100vh;
@@ -54,7 +51,6 @@
 }
 
 .asset-name {
-  font-family: 'Playfair Display', serif;
   font-size: 3.5rem;
   font-weight: 700;
   margin: 0 0 16px;
@@ -209,7 +205,6 @@
 }
 
 .section-title {
-  font-family: 'Playfair Display', serif;
   font-size: 2.5rem;
   font-weight: 600;
   margin: 0 0 12px;
