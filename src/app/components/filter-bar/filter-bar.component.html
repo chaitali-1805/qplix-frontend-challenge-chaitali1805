@@ -1,0 +1,79 @@
+<div class="filter-bar">
+  <form [formGroup]="filterForm" class="filter-form">
+    @for (field of config.fields; track field.key) {
+      <div class="filter-field">
+        @if (field.type === 'text') {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <input 
+              matInput 
+              [formControlName]="field.key" 
+              [placeholder]="'Enter ' + field.label.toLowerCase()"
+              autocomplete="off"
+            />
+            @if (filterForm.get(field.key)?.value) {
+              <button 
+                matSuffix 
+                mat-icon-button 
+                type="button"
+                (click)="clearField(field.key)"
+                matTooltip="Clear field"
+              >
+                <mat-icon>clear</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        }
+
+        @if (field.type === 'multiselect') {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ field.label }}</mat-label>
+            <mat-select 
+              [formControlName]="field.key" 
+              multiple
+              [placeholder]="'Select ' + field.label.toLowerCase()"
+            >
+              @for (option of field.options; track option.value) {
+                <mat-option [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              }
+            </mat-select>
+            @if (filterForm.get(field.key)?.value?.length > 0) {
+              <button 
+                matSuffix 
+                mat-icon-button 
+                type="button"
+                (click)="clearField(field.key)"
+                matTooltip="Clear selection"
+              >
+                <mat-icon>clear</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        }
+
+        @if (field.type === 'boolean') {
+          <div class="checkbox-field">
+            <mat-checkbox [formControlName]="field.key">
+              {{ field.label }}
+            </mat-checkbox>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="filter-actions">
+      <button 
+        mat-stroked-button 
+        type="button" 
+        (click)="resetFilters()"
+        [disabled]="!hasActiveFilters()"
+        matTooltip="Reset all filters"
+      >
+        <mat-icon>refresh</mat-icon>
+        Reset Filters
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,133 @@
+.filter-bar {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.filter-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  mat-form-field {
+    width: 100%;
+    
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none; // Hide hint text to save space
+    }
+  }
+
+  .checkbox-field {
+    padding: 0.75rem 0;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding-left: 1rem;
+    background-color: white;
+    transition: border-color 0.3s ease;
+
+    &:hover {
+      border-color: #1976d2;
+    }
+
+    mat-checkbox {
+      width: 100%;
+    }
+  }
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  button {
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Enhanced form field styling
+::ng-deep {
+  .filter-bar {
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        background-color: white;
+        border-radius: 6px;
+      }
+
+      &.mat-focused {
+        .mat-mdc-text-field-wrapper {
+          box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+      }
+    }
+
+    .mat-mdc-select {
+      .mat-mdc-select-trigger {
+        min-height: 48px;
+      }
+    }
+
+    .mat-mdc-checkbox {
+      .mat-mdc-checkbox-label {
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+  }
+}

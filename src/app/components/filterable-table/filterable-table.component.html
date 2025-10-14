@@ -1,7 +1,10 @@
-<!-- Feel free to replace this placeholder with your filterbar -->
-<fieldset class="filter-bar-placeholder">
-  <legend>Filter bar should go here</legend>
-</fieldset>
+@if (filterConfig) {
+  <filter-bar
+    [config]="filterConfig"
+    [debounceTime]="debounceTime || 300"
+    (filterChange)="onFilterChange($event)"
+  />
+}
 
 <div class="table-wrapper">
   @if (isLoading) {

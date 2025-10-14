@@ -1,7 +1,9 @@
 <filterable-table
   class="security-list"
-  [dataSource]="securities$ | async"
-  [isLoading]="loadingSecurities$ | async"
+  [dataSource]="displayedSecurities()"
+  [isLoading]="loading()"
+  [filterConfig]="filterConfig()"
+  (filterChange)="onFilterChange($event)"
 >
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -24,6 +26,22 @@
 
   <!-- Row shown when there is no matching data that will be provided to the wrapper table. -->
   <tr class="mat-row" *matNoDataRow>
-    <td class="mat-cell" colspan="3"><i>No data</i></td>
+    <td class="mat-cell" colspan="3" class="text-center py-4">
+      @if (loading()) {
+        Loading...
+      } @else {
+        No matching securities found
+      }
+    </td>
   </tr>
 </filterable-table>
+
+<mat-paginator
+  [length]="totalItems()"
+  [pageSize]="pageSize()"
+  [pageIndex]="pageIndex()"
+  [pageSizeOptions]="[5, 10, 25, 50]"
+  (page)="onPageChange($event)"
+  showFirstLastButtons
+  aria-label="Select page of securities"
+></mat-paginator>
