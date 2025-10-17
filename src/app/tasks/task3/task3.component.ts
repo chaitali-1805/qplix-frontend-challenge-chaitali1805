@@ -1,23 +1,29 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, signal, computed, input } from '@angular/core'
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, signal, computed, input, ViewChild, ElementRef, AfterViewInit,
+} from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { collectibleAssetData, type CollectibleAssetData } from '../../mocks/dashboard-mock'
+import { Chart, type ChartConfiguration, registerables } from 'chart.js'
+
+Chart.register(...registerables)
 
 @Component({
-  selector: "app-task3",
+  selector: 'app-task3',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './task3.component.html',
   styleUrl: './task3.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Task3Component implements OnInit, OnDestroy {
-  
+export class Task3Component implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild("performanceChart") performanceChartRef!: ElementRef<HTMLCanvasElement>
+
   assetData = input<CollectibleAssetData>(collectibleAssetData)
 
   currentImageIndex = signal(0)
   selectedChartType = signal<"bar" | "line">("bar")
-  hoveredPointIndex = signal<number | null>(null)
+
+  private chartInstance: Chart | null = null
 
   currentAssetData = computed(() => this.assetData())
   totalAppreciation = computed(() => {
@@ -36,56 +42,21 @@ export class Task3Component implements OnInit, OnDestroy {
     return Math.pow(1 + appreciation / 100, 1 / years) - 1
   })
 
-  maxValue = computed(() => Math.max(...this.currentAssetData().performanceData.map((d) => d.value)))
-
-  minValue = computed(() => Math.min(...this.currentAssetData().performanceData.map((d) => d.value)))
-
-  lineChartPoints = computed(() => {
-    const data = this.currentAssetData().performanceData
-    const maxValue = this.maxValue()
-    const minValue = this.minValue()
-    const range = maxValue - minValue
-    const padding = range * 0.15
-
-    return data.map((point, index) => {
-      const x = (index / (data.length - 1)) * 100
-      const normalizedValue = ((point.value - minValue) / range) * 70 + 15
-      const y = 100 - normalizedValue
-
-      return {
-        x,
-        y,
-        value: point.value,
-        year: point.year,
-        appreciation: point.appreciation,
-        marketTrend: point.marketTrend,
-      }
-    })
-  })
-
-  yearlyGrowth = computed(() => {
-    const data = this.currentAssetData().performanceData
-    return data.slice(1).map((point, index) => {
-      const previousValue = data[index].value
-      const currentValue = point.value
-      const growth = ((currentValue - previousValue) / previousValue) * 100
-      return {
-        year: point.year,
-        growth: growth,
-        amount: currentValue - previousValue,
-      }
-    })
-  })
-
   private carouselInterval: any
 
   ngOnInit() {
     this.startCarousel()
-    this.animateChartElements()
+  }
+
+  ngAfterViewInit() {
+    this.createChart()
   }
 
   ngOnDestroy() {
     if (this.carouselInterval) clearInterval(this.carouselInterval)
+    if (this.chartInstance) {
+      this.chartInstance.destroy()
+    }
   }
 
   startCarousel() {
@@ -106,67 +77,118 @@ export class Task3Component implements OnInit, OnDestroy {
 
   toggleChartType() {
     this.selectedChartType.update((c) => (c === "bar" ? "line" : "bar"))
+    this.createChart()
   }
 
-  getLineChartPath(): string {
-    const points = this.lineChartPoints()
-    if (points.length === 0) return ""
+  private createChart() {
+    if (!this.performanceChartRef) return
 
-    let path = `M ${points[0].x} ${points[0].y}`
-    for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i].x} ${points[i].y}`
+    // Destroy existing chart
+    if (this.chartInstance) {
+      this.chartInstance.destroy()
     }
-    return path
-  }
 
-  onPointHover(index: number | null) {
-    this.hoveredPointIndex.set(index)
-  }
+    const ctx = this.performanceChartRef.nativeElement.getContext("2d")
+    if (!ctx) return
 
-  private animateChartElements() {
-    setTimeout(() => {
-      this.animateChartBars()
-      this.animateFactorBars()
-      this.animateLineChart()
-    }, 500)
-  }
+    const data = this.currentAssetData().performanceData
+    const chartType = this.selectedChartType()
 
-  private animateChartBars() {
-    const bars = document.querySelectorAll(".chart-bar")
-    bars.forEach((bar, index) => {
-      const barElement = bar as HTMLElement
-      const data = this.currentAssetData().performanceData[index]
-      const heightPercentage = (data.value / this.maxValue()) * 100
-      barElement.style.setProperty("--bar-height", `${heightPercentage}%`)
-      setTimeout(() => barElement.classList.add("animated"), index * 150)
-    })
-  }
+    const config: ChartConfiguration = {
+      type: chartType,
+      data: {
+        labels: data.map((d) => d.year.toString()),
+        datasets: [
+          {
+            label: "Value",
+            data: data.map((d) => d.value),
+            backgroundColor: chartType === "bar" ? "rgba(59, 130, 246, 0.8)" : "rgba(59, 130, 246, 0.1)",
+            borderColor: "rgb(59, 130, 246)",
+            borderWidth: 3,
+            fill: chartType === "line",
+            tension: 0.4,
+            pointBackgroundColor: "rgb(59, 130, 246)",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 10,
+            pointHoverBackgroundColor: "rgb(30, 64, 175)",
+            pointHoverBorderWidth: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: "rgba(15, 23, 42, 0.95)",
+            titleColor: "#94a3b8",
+            bodyColor: "#fff",
+            padding: 16,
+            cornerRadius: 12,
+            displayColors: false,
+            callbacks: {
+              title: (context) => {
+                const index = context[0].dataIndex
+                return `Year ${data[index].year}`
+              },
+              label: (context) => {
+                const index = context.dataIndex
+                const value = this.formatCurrency(data[index].value, this.currentAssetData().currency)
+                return value
+              },
+              afterLabel: (context) => {
+                const index = context.dataIndex
+                const appreciation = data[index].appreciation
+                if (appreciation > 0) {
+                  return `Total appreciation: +${appreciation}%`
+                }
+                return ""
+              },
+            },
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: (value) => {
+                return this.formatCurrency(value as number, this.currentAssetData().currency)
+              },
+              color: "#94a3b8",
+              font: {
+                size: 11,
+              },
+            },
+            grid: {
+              color: "rgba(59, 130, 246, 0.1)",
+            },
+          },
+          x: {
+            ticks: {
+              color: "#64748b",
+              font: {
+                size: 12,
+                weight: 500,
+              },
+            },
+            grid: {
+              display: false,
+            },
+          },
+        },
+        animation: {
+          duration: 1500,
+          easing: "easeInOutQuart",
+        },
+      },
+    }
 
-  private animateFactorBars() {
-    const factorBars = document.querySelectorAll(".factor-fill")
-    factorBars.forEach((bar, index) => {
-      const barElement = bar as HTMLElement
-      const factor = this.currentAssetData().marketFactors[index]
-      barElement.style.setProperty("--factor-width", `${factor.value}%`)
-      setTimeout(() => barElement.classList.add("animated"), index * 100)
-    })
-  }
-
-  private animateLineChart() {
-    setTimeout(() => {
-      const linePath = document.querySelector(".line-chart-path") as SVGPathElement
-      const points = document.querySelectorAll(".data-point-circle")
-
-      if (linePath) {
-        linePath.classList.add("animated")
-      }
-
-      points.forEach((point, index) => {
-        setTimeout(() => {
-          ;(point as HTMLElement).classList.add("animated")
-        }, index * 100)
-      })
-    }, 300)
+    this.chartInstance = new Chart(ctx, config)
   }
 
   formatCurrency(value: number, currency = "EUR"): string {
@@ -176,31 +198,5 @@ export class Task3Component implements OnInit, OnDestroy {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value)
-  }
-
-  getChartHeight(value: number): number {
-    return (value / this.maxValue()) * 100
-  }
-
-  getTrendIcon(trend: string): string {
-    switch (trend) {
-      case "bullish":
-        return "📈"
-      case "bearish":
-        return "📉"
-      default:
-        return "➡️"
-    }
-  }
-
-  getTrendColor(trend: string): string {
-    switch (trend) {
-      case "bullish":
-        return "#10b981"
-      case "bearish":
-        return "#ef4444"
-      default:
-        return "#6b7280"
-    }
   }
 }

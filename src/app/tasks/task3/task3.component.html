@@ -101,14 +101,14 @@
         <button
           class="chart-toggle"
           [class.active]="selectedChartType() === 'bar'"
-          (click)="selectedChartType.set('bar')"
+          (click)="toggleChartType()"
         >
           📊 Bar Chart
         </button>
         <button
           class="chart-toggle"
           [class.active]="selectedChartType() === 'line'"
-          (click)="selectedChartType.set('line')"
+          (click)="toggleChartType()"
         >
           📈 Line Chart
         </button>
@@ -119,127 +119,8 @@
       <!-- VALUE GROWTH CHART -->
       <div class="chart-card main-chart">
         <h3>Value Growth Over Time</h3>
-        
-        <!-- BAR CHART VIEW -->
-        <div class="chart-container" *ngIf="selectedChartType() === 'bar'">
-          <div class="chart-bars">
-            <div
-              *ngFor="let data of currentAssetData().performanceData; let i = index"
-              class="bar-container"
-            >
-              <div class="bar-label">{{ data.year }}</div>
-              <div
-                class="chart-bar"
-                [style.height.%]="getChartHeight(data.value)"
-              >
-                <div class="bar-tooltip">
-                  <div class="tooltip-value">
-                    {{ formatCurrency(data.value, currentAssetData().currency) }}
-                  </div>
-                  <div
-                    class="tooltip-change"
-                    [style.color]="getTrendColor(data.marketTrend)"
-                  >
-                    {{ getTrendIcon(data.marketTrend) }}
-                    {{ data.appreciation > 0 ? '+' : '' }}{{ data.appreciation }}%
-                  </div>
-                </div>
-              </div>
-              <div class="bar-value">
-                {{ formatCurrency(data.value, currentAssetData().currency) }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- LINE CHART VIEW -->
-        <div class="line-chart-container" *ngIf="selectedChartType() === 'line'">
-          <!-- Background grid -->
-          <div class="chart-grid">
-            <div class="grid-line" *ngFor="let i of [0, 1, 2, 3, 4]">
-              <span class="grid-label" *ngIf="i === 0">
-                {{ formatCurrency(maxValue(), currentAssetData().currency) }}
-              </span>
-              <span class="grid-label" *ngIf="i === 4">
-                {{ formatCurrency(minValue(), currentAssetData().currency) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- SVG Line Chart -->
-          <svg class="line-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-              </linearGradient>
-              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
-                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0" />
-              </linearGradient>
-            </defs>
-
-            <!-- Area under the line -->
-            <path
-              [attr.d]="getLineChartPath() + ' L 100 100 L 0 100 Z'"
-              fill="url(#areaGradient)"
-              class="line-chart-area"
-            />
-
-            <!-- Main line -->
-            <path
-              [attr.d]="getLineChartPath()"
-              fill="none"
-              stroke="url(#lineGradient)"
-              stroke-width="3"
-              class="line-chart-path"
-            />
-          </svg>
-
-          <!-- Data points layer -->
-          <div class="line-chart-data-layer">
-            <!-- Data points -->
-            <div
-              *ngFor="let point of lineChartPoints(); let i = index"
-              class="data-point-group"
-              [style.left.%]="point.x"
-              [style.bottom.%]="100 - point.y"
-            >
-              <!-- The data point circle -->
-              <div
-                class="data-point-circle"
-                [class.hovered]="hoveredPointIndex() === i"
-                (mouseenter)="onPointHover(i)"
-                (mouseleave)="onPointHover(null)"
-              >
-                <div class="point-ring"></div>
-              </div>
-
-              <!-- Year label below point -->
-              <div class="point-year-label">{{ point.year }}</div>
-
-              <!-- Enhanced tooltip with detailed information like bar chart -->
-              <div
-                class="enhanced-tooltip"
-                [class.visible]="hoveredPointIndex() === i"
-              >
-                <div class="tooltip-header">
-                  <span class="tooltip-year-large">{{ point.year }}</span>
-                  
-                </div>
-                <div class="tooltip-value-large">
-                  {{ formatCurrency(point.value, currentAssetData().currency) }}
-                </div>
-                <div class="tooltip-appreciation" *ngIf="point.appreciation > 0">
-                  Total appreciation: {{ getTrendIcon(point.marketTrend) }} <strong>+{{ point.appreciation }}%</strong>
-                </div>
-                <div class="tooltip-gain" *ngIf="i > 0">
-                  Gain from {{ lineChartPoints()[i-1].year }}: 
-                  <strong>{{ formatCurrency(point.value - lineChartPoints()[i-1].value, currentAssetData().currency) }}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="chart-wrapper">
+          <canvas #performanceChart></canvas>
         </div>
       </div>
 
@@ -260,7 +141,6 @@
                 <div 
                   class="factor-fill" 
                   [style.width.%]="factor.value"
-                  [attr.data-value]="factor.value"
                 ></div>
               </div>
             </div>
